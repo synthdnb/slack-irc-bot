@@ -31,7 +31,15 @@ irc.hearing_msg do |event|
 end
 
 Thread.new do
-  raise "IRC Throttled" unless irc.start_listening!
+  timeout = 10
+  begin
+    raise  unless irc.start_listening!
+  rescue
+    puts "IRC Throttled"
+    sleep timeout
+    timeout = 60
+    retry
+  end
 end
 
 set :bind, '0.0.0.0'
@@ -42,14 +50,21 @@ def has_params *param_list
 end
 
 user_map = {}
+nick_map = {}
 decoder = HTMLEntities.new
+
 post '/irc/haje' do
   puts params
   if has_params :token, :user_id, :user_name, :text #from slack
     return "FILTERED" if params[:user_name] =~ /slackbot/
     user_map[params[:user_id]] = params[:user_name]
     begin
-      username = params[:user_name].gsub(/^(\p{Graph})/,'\1.') #설호방지문자
+      if nick_map.has_key?(params[:user_id])
+        username = nick_map[params[:user_id]] #매핑이 있으면 그걸로 추가
+      else
+        username = params[:user_name]
+      end
+      
       text = decoder.decode(params[:text]).gsub /<@(\w+)>/ do 
         uid = Regexp.last_match[1]
         (user_map.has_key? uid) ? "@#{user_map[uid]}": "@#{uid}"
@@ -68,4 +83,18 @@ post '/irc/haje' do
   end
 end
 
+post '/irc/map' do
+  puts params
+  if has_params :user_id, :user_name
+    if params[:text] == ""
+      nick_map[params[:user_id]] = nil
+      "#{params[:user_name]}'s IRC nickname has been restored to default"
+    else
+      nick_map[params[:user_id]] = params[:text]
+      "Registered #{params[:user_name]} as #{params[:text]}"
+    end
+  else
+    "FAILED"
+  end
+end
 
