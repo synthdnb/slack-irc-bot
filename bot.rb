@@ -2,8 +2,7 @@ require 'net/yail'
 require 'httparty'
 require 'yaml'
 require 'sinatra'
-require 'pry'
-require './message_parser_unicode_fix'
+require './unicode_fix'
 
 config = YAML.load_file('config.yml')
 
