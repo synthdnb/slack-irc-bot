@@ -1,0 +1,10 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    net-yail (1.6.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  net-yail

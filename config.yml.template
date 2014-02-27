@@ -1,0 +1,12 @@
+#rename this file to config.yml and modify 
+:irc:
+  :address: irc.server.address        #irc server address
+  :port: 8080                         #irc server port
+  :username: hajebot                  #irc username
+  :realname: superhajebot             #irc realname
+  :nicknames: [nicknames,to,try]      #bot's nickname list to try
+  :channels: [channels,to,join]       #channel list to join
+
+:slack: 
+  :token: slack-client-token          #slack client token from https://api.slack.com/ or oAuth
+  :channel: channelcode               #slack channel to sync (code or name)
