@@ -46,7 +46,7 @@ post '/irc/haje' do
   if has_params :token, :user_id, :user_name, :text #from slack
     user_map[params[:user_id]] = params[:user_name]
     begin
-      params[:user_name].gsub!(/^(\p{Graph})/,"\\1\u200b") #설호방지문자
+      params[:user_name].gsub!(/^(\p{Graph})/,"\\1.") #설호방지문자
       params[:text].gsub /<@(\w+)>/ do 
         uid = Regexp.last_match[1]
         user_map.has_key? uid ? "@#{user_map[uid]}": "@#{uid}"
