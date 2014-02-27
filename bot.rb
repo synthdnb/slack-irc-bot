@@ -39,15 +39,9 @@ end
 Thread.new do
   timeout = 10
   begin
-    raise  unless irc.start_listening!
+    raise unless irc.start_listening!
   rescue
     puts "IRC Throttled"
-    payload = config[:slack].merge(
-      text: 'Bot Exited',
-      username: "[irc]",
-      parse: 'full',
-    )
-    HTTParty.get('https://slack.com/api/chat.postMessage', query: payload)
     sleep timeout
     timeout = 60
     retry
@@ -63,20 +57,28 @@ end
 
 user_map = {}
 nick_map = {}
+
+if File.exists? ('data.log')
+  File.open('data.log','r') do |f|
+    user_map = Marshal.load(f.readline)
+    nick_map = Marshal.load(f.readline)
+  end
+end
+
 decoder = HTMLEntities.new
 
 post '/irc/haje' do
   puts params
   if has_params :token, :user_id, :user_name, :text #from slack
     return "FILTERED" if params[:user_name] =~ /slackbot/
-    user_map[params[:user_id]] = params[:user_name]
+      user_map[params[:user_id]] = params[:user_name]
     begin
       if nick_map.has_key?(params[:user_id])
         username = nick_map[params[:user_id]] #매핑이 있으면 그걸로 추가
       else
         username = params[:user_name]
       end
-      
+
       text = decoder.decode(params[:text]).gsub /<@(\w+)>/ do 
         uid = Regexp.last_match[1]
         (user_map.has_key? uid) ? "@#{user_map[uid]}": "@#{uid}"
@@ -109,4 +111,22 @@ post '/irc/map' do
     "FAILED"
   end
 end
+
+
+quithandler = lambda do
+  File.open('data.log','w') do |f|
+    f.puts Marshal.dump(user_map)
+    f.puts Marshal.dump(nick_map)
+  end
+  payload = config[:slack].merge(
+    text: 'Bot Exited',
+    username: "[irc]",
+    parse: 'full',
+  )
+  HTTParty.get('https://slack.com/api/chat.postMessage', query: payload)
+end
+
+trap("INT", quithandler)
+trap("TERM", quithandler)
+
 

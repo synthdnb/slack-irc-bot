@@ -59,5 +59,27 @@ module Net
         end
       end
     end
+
+    def start_listening
+      # We don't want to spawn an extra listener
+      return if Thread === @ioloop_thread
+
+      # Don't listen if socket is dead
+      return if @dead_socket
+
+      # Exit a bit more gracefully than just crashing out - allow any :outgoing_quit filters to run,
+      # and even give the server a second to clean up before we fry the connection
+      #
+      # TODO: This REALLY doesn't belong here!  This is saying everybody who uses the lib wants
+      #       CTRL+C to end the app at the YAIL level.  Not necessarily true outside bot-land.
+
+      # Begin the listening thread
+      @ioloop_thread = Thread.new {io_loop}
+      @input_processor = Thread.new {process_input_loop}
+      @privmsg_processor = Thread.new {process_privmsg_loop}
+
+      # Let's begin the cycle by telling the server who we are.  This should start a TERRIBLE CHAIN OF EVENTS!!!
+      dispatch OutgoingEvent.new(:type => :begin_connection, :username => @username, :address => @address, :realname => @realname)
+    end
   end
 end
