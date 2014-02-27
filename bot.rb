@@ -49,11 +49,11 @@ post '/irc/haje' do
     return "FILTERED" if params[:user_name] =~ /slackbot/
     user_map[params[:user_id]] = params[:user_name]
     begin
-      username = params[:user_name].gsub(/^(\p{Graph})/,"\\1.") #설호방지문자
+      username = params[:user_name].gsub(/^(\p{Graph})/,'\1.') #설호방지문자
       text = decoder.decode(params[:text]).gsub /<@(\w+)>/ do 
         uid = Regexp.last_match[1]
         (user_map.has_key? uid) ? "@#{user_map[uid]}": "@#{uid}"
-      end
+      end.gsub /<([^\s\|]*?)?\|?([^\s\|]*)>/, '\2'
       text.split("\n").each do |line|
         config[:irc][:channels].each do |channel|
           irc.msg("##{channel}", "#{username}: #{line}")
