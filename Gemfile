@@ -4,5 +4,5 @@ source "https://rubygems.org"
 gem 'net-yail'
 gem 'httparty'
 gem 'sinatra'
-
+gem 'htmlentities'
 
