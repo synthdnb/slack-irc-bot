@@ -11,6 +11,12 @@ irc = Net::YAIL.new(config[:irc])
 
 irc.on_welcome do |event| 
   config[:irc][:channels].each do |channel|
+    payload = config[:slack].merge(
+      text: 'Bot Entered',
+      username: "[irc]",
+      parse: 'full',
+    )
+    HTTParty.get('https://slack.com/api/chat.postMessage', query: payload)
     irc.join("##{channel}") 
   end
 end
@@ -36,6 +42,12 @@ Thread.new do
     raise  unless irc.start_listening!
   rescue
     puts "IRC Throttled"
+    payload = config[:slack].merge(
+      text: 'Bot Exited',
+      username: "[irc]",
+      parse: 'full',
+    )
+    HTTParty.get('https://slack.com/api/chat.postMessage', query: payload)
     sleep timeout
     timeout = 60
     retry
