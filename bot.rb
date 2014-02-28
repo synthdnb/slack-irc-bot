@@ -60,8 +60,9 @@ nick_map = {}
 
 if File.exists? ('data.log')
   File.open('data.log','r') do |f|
-    user_map = Marshal.load(f.readline)
-    nick_map = Marshal.load(f.readline)
+    data = Marshal.load(f.read)
+    user_map = data[:user]
+    nick_map = data[:nick]
   end
 end
 
@@ -115,8 +116,7 @@ end
 
 quithandler = lambda do
   File.open('data.log','w') do |f|
-    f.puts Marshal.dump(user_map)
-    f.puts Marshal.dump(nick_map)
+    f.write(Marshal.dump({user: user_map, nick: nick_map}))
   end
   payload = config[:slack].merge(
     text: 'Bot Exited',
