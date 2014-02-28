@@ -86,7 +86,7 @@ post '/irc/haje' do
       end.gsub /<([^\s\|]*?)?\|?([^\s\|]*)>/, '\2'
       text.split("\n").each do |line|
         config[:irc][:channels].each do |channel|
-          irc.msg("##{channel}", "#{username}: #{line}")
+          irc.msg("##{channel}", "\u0002#{username}\u0002: #{line}")
         end
       end
       "SUCCESS"
