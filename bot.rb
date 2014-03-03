@@ -36,14 +36,17 @@ irc.hearing_msg do |event|
   end
 end
 
+class IRCThrottledError < RuntimeError; end
+
 Thread.new do
-  timeout = 10
+  timeout = 90
   begin
-    raise unless irc.start_listening!
-  rescue
-    puts "IRC Throttled"
+    raise IRCThrottledError unless irc.start_listening!
+  rescue => e
+    puts e.message
+    puts e.backtrace
     sleep timeout
-    timeout = 60
+    timeout += 10
     retry
   end
 end
