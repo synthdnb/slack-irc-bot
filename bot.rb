@@ -43,6 +43,7 @@ Thread.new do
   begin
     raise IRCThrottledError unless irc.start_listening!
   rescue => e
+    puts e.class
     puts e.message
     puts e.backtrace
     sleep timeout
@@ -91,9 +92,11 @@ post '/irc/haje' do
         config[:irc][:channels].each do |channel|
           irc.msg("##{channel}", "\u0002#{username}\u0002: #{line}")
         end
+        sleep 0.5
       end
       "SUCCESS"
     rescue => e
+      puts e.class
       puts e.message
       puts e.backtrace
       "FAILED"
