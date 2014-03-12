@@ -5,8 +5,8 @@ require 'sinatra'
 require 'htmlentities'
 require './unicode_fix'
 
-config = YAML.load_file('config.yml')
-
+env = ARGV[0] || "production"
+config = YAML.load_file('config.yml')[env]
 irc = Net::YAIL.new(config[:irc])
 
 irc.on_welcome do |event| 
@@ -47,13 +47,14 @@ Thread.new do
     puts e.message
     puts e.backtrace
     sleep timeout
+    timeout = 60 if timeout < 60
     timeout += 10
     retry
   end
 end
 
 set :bind, '0.0.0.0'
-set :port, 4567
+set :port, config[:bot][:port]
 
 def has_params *param_list
   params.map{|p| params[p].nil?}.inject(:|)
@@ -61,18 +62,20 @@ end
 
 user_map = {}
 nick_map = {}
+bitbucket_map = {}
 
 if File.exists? ('data.log')
   File.open('data.log','r') do |f|
     data = Marshal.load(f.read)
     user_map = data[:user]
     nick_map = data[:nick]
+    bitbucket_map = data[:bitbucket]
   end
 end
 
 decoder = HTMLEntities.new
 
-post '/irc/haje' do
+post '/slack/hook' do
   puts params
   if has_params :token, :user_id, :user_name, :text #from slack
     return "FILTERED" if params[:user_name] =~ /slackbot/
@@ -119,10 +122,14 @@ post '/irc/map' do
   end
 end
 
+post '/bitbucket/hook' do
+  puts params
+end
+
 
 quithandler = lambda do
   File.open('data.log','w') do |f|
-    f.write(Marshal.dump({user: user_map, nick: nick_map}))
+    f.write(Marshal.dump({user: user_map, nick: nick_map, bitbucket: bitbucket_map}))
   end
   payload = config[:slack].merge(
     text: 'Bot Exited',
