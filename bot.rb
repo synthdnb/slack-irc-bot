@@ -108,9 +108,9 @@ class WebServer < Sinatra::Base
           username = params[:user_name]
         end
 
-        text = @@decoder.decode(params[:text]).gsub /<@@(\w+)>/ do 
+        text = @@decoder.decode(params[:text]).gsub /<@(\w+)>/ do 
           uid = Regexp.last_match[1]
-          (user_map.has_key? uid) ? "@@#{user_map[uid]}": "@@#{uid}"
+          (@@user_map.has_key? uid) ? "@#{@@user_map[uid]}": "@#{uid}"
         end.gsub /<([^\s\|]*?)?\|?([^\s\|]*)>/, '\2'
         text.split("\n").each do |line|
           @@irc.msg(@@chan_map[:slack][params[:channel_id]], "\u0002#{username}\u0002: #{line}")
